@@ -154,13 +154,13 @@ cost_per_conversion = (
 # Display key performance indicators
 st.subheader("Business Performance Overview")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 col1.metric("Total Leads", f"{total_leads:,.0f}")
 col2.metric("Conversions", f"{total_conversions:,.0f}")
 col3.metric("Conversion Rate", f"{conversion_rate:.2f}%")
 col4.metric("Cost per Lead", f"₹{cost_per_lead:,.2f}")
-
+col5.metric("Total Marketing Spend", f"₹{total_spend:,.2f}")
 st.metric(
     "Cost per Conversion",
     f"₹{cost_per_conversion:,.2f}"
@@ -405,4 +405,81 @@ st.info(
     f"{best_channel} generated the most leads in this dataset. "
     "Compare conversion rates and costs before deciding "
     "which channel performs best overall."
+)
+
+
+
+# Automated Marketing Recommendations
+st.subheader("Recommended Marketing Actions")
+
+recommendations = []
+
+# Recommendation 1: Highest conversion rate
+if not valid_rates.empty:
+    best_rate_row = valid_rates.loc[
+        valid_rates["Conversion Rate (%)"].idxmax()
+    ]
+
+    recommendations.append(
+        f"**{best_rate_row['Channel']}** has the highest "
+        f"conversion rate at "
+        f"{best_rate_row['Conversion Rate (%)']:.2f}%. "
+        "Review this channel's campaign strategy to identify "
+        "practices worth testing in other channels."
+    )
+
+# Recommendation 2: Lowest cost per conversion
+if not valid_costs.empty:
+    lowest_cost_row = valid_costs.loc[
+        valid_costs["Cost per Conversion"].idxmin()
+    ]
+
+    recommendations.append(
+        f"**{lowest_cost_row['Channel']}** has the lowest "
+        f"cost per conversion at "
+        f"₹{lowest_cost_row['Cost per Conversion']:,.2f}. "
+        "Consider testing whether additional budget improves "
+        "results without increasing costs excessively."
+    )
+
+# Recommendation 3: Spend with no recorded conversions
+no_conversion_channels = channel_data[
+    (channel_data["Conversions"] == 0)
+    & (channel_data["Marketing Spend"] > 0)
+]
+
+for _, row in no_conversion_channels.iterrows():
+    recommendations.append(
+        f"Review **{row['Channel']}**: it has recorded "
+        f"₹{row['Marketing Spend']:,.2f} in spend but "
+        "no conversions. Check tracking, targeting, and "
+        "campaign performance before changing the budget."
+    )
+
+# Recommendation 4: Lowest conversion rate
+if len(valid_rates) > 1:
+    lowest_rate_row = valid_rates.loc[
+        valid_rates["Conversion Rate (%)"].idxmin()
+    ]
+
+    recommendations.append(
+        f"Investigate **{lowest_rate_row['Channel']}**, "
+        f"which has the lowest conversion rate at "
+        f"{lowest_rate_row['Conversion Rate (%)']:.2f}%. "
+        "Review audience fit, landing pages, and follow-up."
+    )
+
+# Display recommendations
+if recommendations:
+    for recommendation in recommendations:
+        st.markdown(f"- {recommendation}")
+else:
+    st.info(
+        "There is not enough conversion or cost data "
+        "to generate recommendations yet."
+    )
+
+st.caption(
+    "Recommendations are based on the uploaded data. "
+    "Investigate possible causes before making budget decisions."
 )
